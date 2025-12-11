@@ -5,8 +5,12 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
 import PauseScreen from './PauseScreen';
+
+const JINX_IMAGE = require('../assets/images/jinx.png');
+const BINGUS_IMAGE = require('../assets/images/bingus.png');
 
 const EMPTY_BOARD = Array(9).fill(null);
 
@@ -97,22 +101,38 @@ const Game = () => {
     resetGame();
   };
 
-  const renderCell = (index) => (
-    <TouchableOpacity
-      key={index}
-      style={styles.cell}
-      activeOpacity={0.8}
-      onPress={() => handlePress(index)}
-    >
-      <Text style={styles.cellText}>{board[index] ?? ''}</Text>
-    </TouchableOpacity>
-  );
+  const renderCell = (index) => {
+    const value = board[index];
+
+    let imageSource = null;
+    if (value === 'X') imageSource = JINX_IMAGE;
+    if (value === 'O') imageSource = BINGUS_IMAGE;
+    return (
+      <TouchableOpacity
+        key={index}
+        style={styles.cell}
+        onPress={() => handlePress(index)}
+        activeOpacity={0.8}
+      >
+      
+        {imageSource && (
+          <Image source={imageSource} style={styles.cellImage} />
+        )}
+      </TouchableOpacity>
+    );
+  }
+
+  const getPlayer = (playerSymbol) => {
+    if (playerSymbol === 'X') return 'Jinx';
+    if (playerSymbol === 'O') return 'Bingus';
+    return playerSymbol;
+  };
 
   const statusText = winner
     ? winner === 'draw'
       ? 'Draw!'
-      : `${winner} wins`
-    : `${currentPlayer}'s turn`;
+      : `${getPlayer(winner)} wins`
+    : `${getPlayer(currentPlayer)}'s turn`;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -233,6 +253,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderColor: '#334155',
     borderWidth: 1,
+    padding: 10,
+  },
+  cellImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
   },
   cellText: {
     fontSize: 48,
