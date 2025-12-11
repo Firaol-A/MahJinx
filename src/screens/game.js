@@ -6,14 +6,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import PauseScreen from './PauseScreen';
 
 const EMPTY_BOARD = Array(9).fill(null);
 
 const Game = () => {
   const [board, setBoard] = useState(EMPTY_BOARD);
-  const [currentPlayer, setCurrentPlayer] = useState('X'); // X always user
+  const [currentPlayer, setCurrentPlayer] = useState('X');
   const [winner, setWinner] = useState(null);
-  const [mode, setMode] = useState(null); // 'solo' | 'duo'
+  const [mode, setMode] = useState(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   const lines = useMemo(
     () => [
@@ -57,6 +59,7 @@ const Game = () => {
     if (mode !== 'solo') return;
     if (winner) return;
     if (currentPlayer !== 'O') return;
+    if (isPaused) return;
 
     const emptyIndexes = board
       .map((cell, idx) => (cell ? null : idx))
@@ -71,13 +74,27 @@ const Game = () => {
     }, 300);
 
     return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [board, currentPlayer, mode, winner]);
+  }, [board, currentPlayer, mode, winner, isPaused]);
 
   const resetGame = () => {
     setBoard(EMPTY_BOARD);
     setCurrentPlayer('X');
     setWinner(null);
+  };
+
+  const handleResume = () => {
+    setIsPaused(false);
+  };
+
+  const handleRestart = () => {
+    setIsPaused(false);
+    resetGame();
+  };
+
+  const handleQuit = () => {
+    setIsPaused(false);
+    setMode(null);
+    resetGame();
   };
 
   const renderCell = (index) => (
@@ -100,10 +117,23 @@ const Game = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Tic Tac Toe</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Tic Tac Toe</Text>
+          
+          {mode && !winner && (
+            <TouchableOpacity 
+              style={styles.pauseButton} 
+              onPress={() => setIsPaused(true)}
+            >
+              <Text style={styles.pauseIcon}>⏸</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <View style={styles.boardWrapper}>
-          <View style={styles.board}>{Array.from({ length: 9 }, (_, i) => renderCell(i))}</View>
+          <View style={styles.board}>
+            {Array.from({ length: 9 }, (_, i) => renderCell(i))}
+          </View>
 
           {!mode && (
             <View style={styles.modeOverlay}>
@@ -134,6 +164,13 @@ const Game = () => {
           <Text style={styles.resetText}>Play Again</Text>
         </TouchableOpacity>
       </View>
+
+      <PauseScreen
+        visible={isPaused}
+        onResume={handleResume}
+        onRestart={handleRestart}
+        onQuit={handleQuit}
+      />
     </SafeAreaView>
   );
 };
@@ -151,10 +188,27 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     gap: 16,
   },
+  header: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
   title: {
     fontSize: 28,
     fontWeight: '700',
     color: '#e2e8f0',
+  },
+  pauseButton: {
+    position: 'absolute',
+    right: 0,
+    backgroundColor: '#334155',
+    padding: 10,
+    borderRadius: 10,
+  },
+  pauseIcon: {
+    fontSize: 20,
   },
   boardWrapper: {
     width: '100%',
