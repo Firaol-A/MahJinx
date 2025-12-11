@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,19 +11,34 @@ import Slider from '@react-native-community/slider';
 
 const { width } = Dimensions.get('window');
 
-const PauseScreen = ({ visible, onResume, onRestart, onQuit }) => {
-  const [volume, setVolume] = useState(0.5);
+const PauseScreen = ({ visible, onResume, onRestart, onQuit, volume, onVolumeChange }) => {
+ // const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
+  const [previousVolume, setPreviousVolume] = useState(0.5);
+
+  useEffect(() => {
+    if (volume > 0 && isMuted) {
+      setIsMuted(false);
+      }
+    }, [volume]);
+
 
   const onSliderChange = (value) => {
-    setVolume(value);
-    if (value > 0 && isMuted) {
+    onVolumeChange(value);
+    if (value > 0) {
       setIsMuted(false);
     }
   };
 
   const toggleMute = () => {
-    setIsMuted(!isMuted);
+    if (isMuted) {
+      setIsMuted(false);
+      onVolumeChange(previousVolume > 0 ? previousVolume : 0.5);
+    } else {
+      setPreviousVolume(volume);
+      setIsMuted(true);
+      onVolumeChange(0);
+    }
   };
 
   const getVolumeIcon = () => {

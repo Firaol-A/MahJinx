@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -7,6 +7,7 @@ import {
   View,
   Image,
 } from 'react-native';
+import Sound from 'react-native-sound';
 import PauseScreen from './PauseScreen';
 
 const JINX_IMAGE = require('../assets/images/jinx.png');
@@ -20,6 +21,43 @@ const Game = () => {
   const [winner, setWinner] = useState(null);
   const [mode, setMode] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
+
+  const [musicVolume, setMusicVolume] = useState(0.5);
+  const musicReference = useRef(null);
+
+  useEffect(() => {
+    Sound.setCategory('Playback');
+
+    const music = new Sound('dream_thing.mp3', Sound.MAIN_BUNDLE, (error) => {
+      if (error) {
+        console.log('Failed to load music', error);
+        return;
+      }
+
+      music.setNumberOfLoops(-1);
+      music.setVolume(musicVolume);
+      music.play();
+
+
+    });
+
+    musicReference.current = music;
+
+    return () => {
+      if(musicReference.current) {
+        musicReference.current.stop();
+        musicReference.current.release();
+      }
+    };
+  }, []);
+
+  // update the music when volume changes
+  useEffect(() => {
+    if (musicReference.current) {
+      musicReference.current.setVolume(musicVolume);
+    }
+  }, [musicVolume]);
+
 
   const lines = useMemo(
     () => [
@@ -190,6 +228,8 @@ const Game = () => {
         onResume={handleResume}
         onRestart={handleRestart}
         onQuit={handleQuit}
+        volume={musicVolume}
+        onVolumeChange={setMusicVolume}
       />
     </SafeAreaView>
   );
