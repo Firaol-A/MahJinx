@@ -11,17 +11,25 @@ import Slider from '@react-native-community/slider';
 
 const { width } = Dimensions.get('window');
 
-const PauseScreen = ({ visible, onResume, onRestart, onQuit, volume, onVolumeChange }) => {
- // const [volume, setVolume] = useState(0.5);
+const PauseScreen = ({ 
+  visible, 
+  onResume, 
+  onRestart, 
+  onQuit, 
+  volume, 
+  onVolumeChange,
+  currentTrackName,
+  onNextTrack,
+  onPrevTrack,
+}) => {
   const [isMuted, setIsMuted] = useState(false);
   const [previousVolume, setPreviousVolume] = useState(0.5);
 
   useEffect(() => {
     if (volume > 0 && isMuted) {
       setIsMuted(false);
-      }
-    }, [volume]);
-
+    }
+  }, [volume]);
 
   const onSliderChange = (value) => {
     onVolumeChange(value);
@@ -59,7 +67,29 @@ const PauseScreen = ({ visible, onResume, onRestart, onQuit, volume, onVolumeCha
         <View style={styles.container}>
           <Text style={styles.title}>PAUSED</Text>
 
-          <View style={styles.volumeSection}>
+        
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Music</Text>
+            <View style={styles.playerControls}>
+              <TouchableOpacity onPress={onPrevTrack} style={styles.controlButton}>
+                <Text style={styles.controlIcon}>⏮</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.trackInfo}>
+                <Text style={styles.trackIcon}>🎵</Text>
+                <Text style={styles.trackName} numberOfLines={1}>
+                  {currentTrackName}
+                </Text>
+              </View>
+
+              <TouchableOpacity onPress={onNextTrack} style={styles.controlButton}>
+                <Text style={styles.controlIcon}>⏭</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          
+          <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Volume</Text>
             
             <View style={styles.volumeControl}>
@@ -122,7 +152,7 @@ const PauseScreen = ({ visible, onResume, onRestart, onQuit, volume, onVolumeCha
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -148,12 +178,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     letterSpacing: 4,
   },
-  volumeSection: {
+  
+  sectionContainer: {
     width: '100%',
     backgroundColor: '#34495E',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 16,
@@ -161,12 +192,43 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontWeight: '600',
   },
+  
+  playerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  
+  },
+  controlButton: {
+    padding: 10,
+  },
+  controlIcon: {
+    fontSize: 24,
+    color: '#ECF0F1',
+  },
+  trackInfo: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 10,
+  },
+  trackIcon: {
+    fontSize: 24, 
+    marginBottom: 4,
+  },
+  trackName: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  
   volumeControl: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   muteButton: {
     padding: 8,
+    paddingLeft: 0,
   },
   volumeIcon: {
     fontSize: 24,
@@ -185,6 +247,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: '100%',
+    marginTop: 8,
   },
   button: {
     width: '100%',

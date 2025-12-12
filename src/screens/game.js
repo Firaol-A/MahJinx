@@ -1,3 +1,7 @@
+
+
+
+
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   SafeAreaView,
@@ -13,6 +17,14 @@ import PauseScreen from './PauseScreen';
 const JINX_IMAGE = require('../assets/images/jinx.png');
 const BINGUS_IMAGE = require('../assets/images/bingus.png');
 
+const MUSIC_PLAYLIST = [
+  { title: 'Dream Thing', file: 'dream_thing' },
+  { title: 'Deluge-ional - Stavros Markonis', file: 'deluge_ional' },
+  { title: 'specialist - アトラスサウンドチーム', file: 'specialist' },
+  { title: 'Through The Glades_ Pt. 1 - Karl Flodin', file: 'through_the_glades' },
+];
+
+
 const EMPTY_BOARD = Array(9).fill(null);
 
 const Game = () => {
@@ -22,41 +34,101 @@ const Game = () => {
   const [mode, setMode] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
 
-  const [musicVolume, setMusicVolume] = useState(0.5);
+  const [musicVolume, setMusicVolume] = useState(1.0);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const musicReference = useRef(null);
 
+ 
   useEffect(() => {
-    Sound.setCategory('Playback');
-
-    const music = new Sound('dream_thing.mp3', Sound.MAIN_BUNDLE, (error) => {
-      if (error) {
-        console.log('Failed to load music', error);
-        return;
-      }
-
-      music.setNumberOfLoops(-1);
-      music.setVolume(musicVolume);
-      music.play();
-
-
-    });
-
-    musicReference.current = music;
-
+    Sound.setCategory('Playback', true); 
     return () => {
-      if(musicReference.current) {
+      if (musicReference.current) {
         musicReference.current.stop();
         musicReference.current.release();
       }
     };
   }, []);
 
-  // update the music when volume changes
+
+ useEffect(() => {
+    let isCancelled = false;
+
+    const cleanupOldMusic = () => {
+      if (musicReference.current) {
+        try {
+          musicReference.current.stop();
+          musicReference.current.release();
+        } catch (error) {
+          
+        }
+        musicReference.current = null;
+      }
+    };
+
+    // clean up previous track 
+    cleanupOldMusic();
+
+    const currentTrack = MUSIC_PLAYLIST[currentTrackIndex];
+    
+    
+    const music = new Sound(currentTrack.file, Sound.MAIN_BUNDLE, (error) => {
+      if (error) {
+        console.log('Failed to load music', error);
+        return;
+      }
+
+
+      if (isCancelled) {
+        return;
+      }
+
+      music.setNumberOfLoops(-1);
+      music.setVolume(musicVolume);
+
+      const playMusic = () => {
+        // double check cancelation before playing
+        if (isCancelled) return;
+
+        music.play((success) => {
+          if (success) {
+            if (!isCancelled) {
+              playMusic();
+            }
+          } else {
+            console.log('Playback failed');
+          }
+        });
+      };
+
+      playMusic();
+    });
+
+    musicReference.current = music;
+
+    return () => {
+      isCancelled = true;
+      cleanupOldMusic();
+    };
+
+  }, [currentTrackIndex]);
+
+ 
+  
   useEffect(() => {
     if (musicReference.current) {
       musicReference.current.setVolume(musicVolume);
     }
   }, [musicVolume]);
+
+  const nextTrack = () => {
+    setCurrentTrackIndex((prev) => (prev + 1) % MUSIC_PLAYLIST.length);
+  };
+
+  const previousTrack = () => {
+    setCurrentTrackIndex((prev) => 
+      (prev - 1 + MUSIC_PLAYLIST.length) % MUSIC_PLAYLIST.length
+    );
+  };
 
 
   const lines = useMemo(
@@ -230,6 +302,9 @@ const Game = () => {
         onQuit={handleQuit}
         volume={musicVolume}
         onVolumeChange={setMusicVolume}
+        currentTrackName={MUSIC_PLAYLIST[currentTrackIndex].title}
+        onNextTrack={nextTrack}
+        onPrevTrack={previousTrack}
       />
     </SafeAreaView>
   );
